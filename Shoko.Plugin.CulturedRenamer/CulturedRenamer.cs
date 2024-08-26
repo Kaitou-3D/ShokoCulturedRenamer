@@ -122,21 +122,23 @@ namespace Renamer.CulturedRenamer
             name.Append($" - {GetEpNameByPref(episode, _preferredLangs)}");
             //after this: name = Showname - S03 - SpecialName
 
-            var _subCount = args.File.Video.MediaInfo.Subs.Count();
-            if (_subCount > 0)
+
+            var info = args.File.Video.MediaInfo;
+
+            if (info.TextStreams.Count() > 0)
             {
-                if (_subCount > 1)
-                    name.Append(" - [MULTI]");
+                if (info.TextStreams.Count > 1)
+                    name.Append(" - [MULTISUB]");
                 else
-                    name.Append($"[{args.File.Video.MediaInfo.Subs[0].LanguageCode}]");
+                    name.Append($"[{args.File.Video.MediaInfo.TextStreams[0].LanguageCode}sub]");
             }
             //after this: name = Showname - S03 - SpecialName[sub]
 
-            name.Append($"[{args.File.Video.MediaInfo.Video.BitDepth}bit]");
+            name.Append($"[{info.VideoStream.BitDepth}bit]");
             //after this: name = Showname - S03 - SpecialName[sub][bit depth]bit
 
-            if(!string.IsNullOrWhiteSpace(args.File.Video.MediaInfo.Video.Codec))
-                name.Append($"[{args.File.Video.MediaInfo.Video.Codec}]");
+            if(info.VideoStream.Codec is not null && !string.IsNullOrEmpty(info.VideoStream.Codec.Name))
+                name.Append($"[{info.VideoStream.Codec.Name}]");
                 //after this: name = Showname - S03 - SpecialName[sub][bit depth]bit[Codec]
 
             if(args.File.Video.AniDB is not null)
