@@ -1,3 +1,9 @@
+# WARNING: This repo is currently targeting the DAILY branch of Shoko. USE AT YOUR OWN RISK!!!!!
+
+# Kaitou3D's custom renamer for Shoko server
+Goals pretty simple: Organize Movies, Series and R-18 content for a local instance of Shoko. Currently the repo is tracking with the Daily updates of Shoko, so use at your own risk.
+
+
 # Sample Plugins For Shoko
 Honestly, the name is pretty self-explanatory. Shoko has a plugin system, and these are here to help you get started and show off some useful tricks.
 
