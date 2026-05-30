@@ -28,7 +28,7 @@ namespace Renamer.CulturedRenamer
         {
         TitleLanguage.English,
         TitleLanguage.Romaji
-    };
+        };
 
         private string _AnimeDir = "Anime";
 
@@ -38,7 +38,7 @@ namespace Renamer.CulturedRenamer
 
         public string Name => GetType().Name;
 
-        public string Description => "Target Folder Structure is based on type (OVA, Movies, Series) and Restricted > 18+";
+        public string Description => "Target Folder Structure is based on type (OVA, Movies, Series) and Restricted > 18+. Made for use with Jellyfin (via shokofin).";
 
         public bool SupportsMoving => true;
 
@@ -125,29 +125,43 @@ namespace Renamer.CulturedRenamer
 
             var info = args.File.Video.MediaInfo;
 
-            if (info.TextStreams.Count() > 0)
+            #pragma warning disable CS8509 // we cant go below zero
+
+            // Add video info
+            _ = info.AudioStreams.Count() switch
             {
-                if (info.TextStreams.Count > 1)
-                    name.Append(" - [MULTISUB]");
-                else
-                    name.Append($"[{args.File.Video.MediaInfo.TextStreams[0].LanguageCode}sub]");
-            }
-            //after this: name = Showname - S03 - SpecialName[sub]
+                0 => name.Append(" - [nodub]"),
+                1 => name.Append($" - [{info.AudioStreams[0].LanguageCode}]"),
+                >= 2 => name.Append(" - [multi-DUB]")
+            };
+
+            //after this: name = Showname - S03 - SpecialName[dub]
+            // Add Sub info
+            _ = info.TextStreams.Count() switch
+            {
+                0 => name.Append("[nosub]"),
+                1 => name.Append($"[{info.TextStreams[0].LanguageCode}sub]"),
+                >= 2 => name.Append("[multi-SUB]")
+            };
+
+            #pragma warning restore CS8509 // we cant go below zero
+
+            //after this: name = Showname - S03 - SpecialName[dub][sub]
 
             name.Append($"[{info.VideoStream.BitDepth}bit]");
-            //after this: name = Showname - S03 - SpecialName[sub][bit depth]bit
+            //after this: name = Showname - S03 - SpecialName[dub][sub][bit depth]
 
             if(info.VideoStream.Codec is not null && !string.IsNullOrEmpty(info.VideoStream.Codec.Name))
                 name.Append($"[{info.VideoStream.Codec.Name}]");
-                //after this: name = Showname - S03 - SpecialName[sub][bit depth]bit[Codec]
+                //after this: name = Showname - S03 - SpecialName[dub][sub][bit depth][Codec]
 
             if(args.File.Video.AniDB is not null)
                 name.Append($"[{args.File.Video.AniDB.ReleaseGroup.Name}]");
-            //after this: name = Showname - S03 - SpecialName[sub][bit depth]bit[Codec][group]
+            //after this: name = Showname - S03 - SpecialName[dub][sub][bit depth][Codec][group]
 
             //get and append the files extension
             name.Append($"{Path.GetExtension(video.FileName)}");
-            //after this: name = Showname - S03 - Specialname.mkv
+            //after this: name = Showname - S03 - SpecialName[sub][bit depth][Codec][group].mkv
 
             return name.ToString().ReplaceInvalidPathCharacters();
 
@@ -199,10 +213,6 @@ namespace Renamer.CulturedRenamer
             // Porn rules them all
             location = isPorn ? _AnimeHentaiDir : location;
             _logger.LogInformation($"Looking for {location}.");
-            foreach (var folder in args.AvailableFolders)
-            {
-                _logger.LogTrace($"{folder.ID} | {folder.Name} - Path: {folder.Path} Type:{folder.DropFolderType}");
-            }
             var destFolder = args.AvailableFolders
                                     .FirstOrDefault(folder => folder.Name.ToLower() == location.ToLower());
 
